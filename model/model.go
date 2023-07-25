@@ -74,13 +74,23 @@ func (r *Request[T]) isValid() bool {
 	return true
 }
 
-func (r *Request[T]) unmarshalRequest(requestString string) (*Request[T], error) {
-	err := json.Unmarshal([]byte(requestString), r)
+func unmarshalRequestInt(requestString string) (r Request[FlexInt], err error) {
+	err = json.Unmarshal([]byte(requestString), &r)
+	return
+}
+
+func unmarshalRequestFloat(requestString string) (r Request[FlexFloat], err error) {
+	err = json.Unmarshal([]byte(requestString), &r)
+	return
+}
+
+func unmarshalRequest(requestString string) (r any, err error) {
+	r, err = unmarshalRequestFloat(requestString)
 	if err != nil {
-		return nil, err
+		r, err = unmarshalRequestInt(requestString)
 	}
 
-	return r, nil
+	return
 }
 
 type Response struct {
