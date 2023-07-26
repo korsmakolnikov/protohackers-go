@@ -1,42 +1,12 @@
 package model
 
 import (
+	"fmt"
 	"testing"
 )
 
-func testUnmarshalRequest(t *testing.T) {
-	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"5.5\"}")
-	if err != nil {
-		t.Errorf("Request unmarshal fail with error %q", err)
-	}
-
-	if rFloat, ok := r.(Request[FlexFloat]); ok {
-		if !rFloat.isValid() {
-			t.Errorf("Request isn't valid on %#v\n", rFloat)
-		}
-		if rFloat.Number != 5.5 {
-			t.Errorf("Request hasn't been unmarshaled properly %#v\n", rFloat)
-		}
-	}
-
-	r, err = unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"5\"}")
-	if err != nil {
-		t.Errorf("Request unmarshal fail with error %q", err)
-	}
-
-	if rInt, ok := r.(Request[FlexInt]); ok {
-		if !rInt.isValid() {
-			t.Errorf("Request isn't valid on %#v\n", rInt)
-		}
-		if rInt.Number != 5 {
-			t.Errorf("Request hasn't been unmarshaled properly %#v\n", rInt)
-		}
-	}
-
-}
-
-func TestUnmarshalAndValidateStringRequests(t *testing.T) {
-	r, err := unmarshalRequestFloat("{\"method\":\"isPrime\", \"number\":\"5.5\"}")
+func TestUnmarshalRequestString(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"5.7\"}")
 	if err != nil {
 		t.Errorf("Request unmarshal fail with error %q", err)
 	}
@@ -45,13 +15,13 @@ func TestUnmarshalAndValidateStringRequests(t *testing.T) {
 		t.Errorf("Request isn't valid on %#v\n", r)
 	}
 
-	if r.Number != 5.5 {
+	if r.Number != 6 {
 		t.Errorf("Request hasn't been unmarshaled properly %#v\n", r)
 	}
 }
 
-func TestUnmarshalAndValidateFloatRequests(t *testing.T) {
-	r, err := unmarshalRequestFloat("{\"method\":\"isPrime\", \"number\":5.5}")
+func TestUnmarshalRequestFloat(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":5.5}")
 	if err != nil {
 		t.Errorf("Request unmarshal fail with error %q", err)
 	}
@@ -60,21 +30,46 @@ func TestUnmarshalAndValidateFloatRequests(t *testing.T) {
 		t.Errorf("Request isn't valid on %#v\n", r)
 	}
 
-	if r.Number != 5.5 {
+	if r.Number != 6 {
 		t.Errorf("Request hasn't been unmarshaled properly %#v\n", r)
 	}
 }
 
-func TestUnmarshalAndValidateIntegerRequests(t *testing.T) {
-	r, err := unmarshalRequestInt("{\"method\":\"isPrime\", \"number\":3}")
+func TestUnmarshalRequestInt(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":5}")
 	if err != nil {
 		t.Errorf("Request unmarshal fail with error %q", err)
 	}
 
 	if !r.isValid() {
-		t.Errorf("Request isn't valid on %q", r)
+		t.Errorf("Request isn't valid on %#v\n", r)
 	}
-	if r.Number != 3 {
+
+	if r.Number != 5 {
 		t.Errorf("Request hasn't been unmarshaled properly %#v\n", r)
+	}
+}
+
+func TestUnmarshalRequestInvalidMethod(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"invalid\", \"number\":\"5\"}")
+	if err != nil {
+		t.Errorf("Request unmarshal fail with error %q", err)
+	}
+
+	if r.isValid() {
+		t.Errorf("Request isn't be valid %#v\n", r)
+	}
+}
+
+func TestUnmarshalRequestUnparsable(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"unparsable\"}")
+
+	fmt.Printf("%+v\n", err)
+	if err == nil {
+		t.Errorf("Request unmarshal should fail")
+	}
+
+	if r.isValid() {
+		t.Errorf("Request shouldn't be valid %#v\n", r)
 	}
 }

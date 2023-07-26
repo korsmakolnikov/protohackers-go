@@ -2,57 +2,65 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
 	"strconv"
 )
 
-type Number interface {
-	FlexFloat | FlexInt
-}
-
 type FlexInt int64
 
+type FlexIntError struct{}
+
+func (r *FlexIntError) Error() string {
+	return "FailedParsingError"
+}
+
 func (n *FlexInt) UnmarshalJSON(b []byte) error {
-	// Integer
 	if b[0] != '"' {
-		return json.Unmarshal(b, (*int64)(n))
+		return unmarshalNumber(b, n)
+	} else {
+		return unmarshalString(b, n)
+	}
+}
+
+func unmarshalNumber(b []byte, n *FlexInt) error {
+	err := json.Unmarshal(b, (*int64)(n))
+	if err != nil {
+		var f float64
+		err = json.Unmarshal(b, &f)
+		if err != nil {
+			return &FlexIntError{}
+		}
+
+		*n = FlexInt(math.Round(f))
 	}
 
-	// String
+	return err
+
+}
+
+func unmarshalString(b []byte, n *FlexInt) error {
+
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
-		return err
+		return &FlexIntError{}
 	}
+
 	i, err := strconv.Atoi(s)
 	if err != nil {
-		return err
+		fmt.Printf("%+v\n", err)
+		x, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			fmt.Printf("%+v\n", err)
+			return &FlexIntError{}
+		} else {
+			i = int(math.Round(x))
+		}
 	}
 
 	*n = FlexInt(i)
-
 	return nil
-}
 
-type FlexFloat float64
-
-func (n *FlexFloat) UnmarshalJSON(b []byte) error {
-	// Integer
-	if b[0] != '"' {
-		return json.Unmarshal(b, (*float64)(n))
-	}
-
-	// String
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-	i, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return err
-	}
-
-	*n = FlexFloat(i)
-
-	return nil
 }
 
 /*
@@ -61,33 +69,28 @@ func (n *FlexFloat) UnmarshalJSON(b []byte) error {
  * must contain a field "method" (and it have to be set to "isPrime")
  * must contain a field "number" that contains any number
  */
-type Request[T Number] struct {
-	Method string `json:"method"`
-	Number T      `json:"number"`
+type Request struct {
+	Method        string  `json:"method"`
+	Number        FlexInt `json:"number"`
+	FailedParsing bool
 }
 
-func (r *Request[T]) isValid() bool {
+func (r *Request) isValid() bool {
 	if r.Method != "isPrime" {
+		return false
+	}
+
+	if r.FailedParsing {
 		return false
 	}
 
 	return true
 }
 
-func unmarshalRequestInt(requestString string) (r Request[FlexInt], err error) {
+func unmarshalRequest(requestString string) (r Request, err error) {
 	err = json.Unmarshal([]byte(requestString), &r)
-	return
-}
-
-func unmarshalRequestFloat(requestString string) (r Request[FlexFloat], err error) {
-	err = json.Unmarshal([]byte(requestString), &r)
-	return
-}
-
-func unmarshalRequest(requestString string) (r any, err error) {
-	r, err = unmarshalRequestFloat(requestString)
 	if err != nil {
-		r, err = unmarshalRequestInt(requestString)
+		r.FailedParsing = true
 	}
 
 	return
