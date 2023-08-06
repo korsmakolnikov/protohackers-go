@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 )
 
@@ -21,6 +22,12 @@ func (n *FlexInt) UnmarshalJSON(b []byte) error {
 	} else {
 		return unmarshalString(b, n)
 	}
+}
+
+func (n *FlexInt) isPrime() bool {
+	in := int64(*n)
+	bn := big.NewInt(in)
+	return bn.ProbablyPrime(0)
 }
 
 func unmarshalNumber(b []byte, n *FlexInt) error {
@@ -85,6 +92,10 @@ func (r *Request) isValid() bool {
 	}
 
 	return true
+}
+
+func (r *Request) isPrime() bool {
+	return r.Number.isPrime()
 }
 
 func unmarshalRequest(requestString string) (r Request, err error) {

@@ -5,6 +5,36 @@ import (
 	"testing"
 )
 
+func TestIsPrimeNumber(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"11\"}")
+	if err != nil {
+		t.Errorf("Request unmarshal fail with error %q", err)
+	}
+
+	if !r.isValid() {
+		t.Errorf("Request isn't valid on %#v\n", r)
+	}
+
+	if !r.isPrime() {
+		t.Errorf("Request hasn't been unmarshaled properly %#v\n", r)
+	}
+}
+
+func TestIsNotPrimeNumber(t *testing.T) {
+	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"5.7\"}")
+	if err != nil {
+		t.Errorf("Request unmarshal fail with error %q", err)
+	}
+
+	if !r.isValid() {
+		t.Errorf("Request isn't valid on %#v\n", r)
+	}
+
+	if r.isPrime() {
+		t.Errorf("Request hasn't been unmarshaled properly %#v\n", r)
+	}
+}
+
 func TestUnmarshalRequestString(t *testing.T) {
 	r, err := unmarshalRequest("{\"method\":\"isPrime\", \"number\":\"5.7\"}")
 	if err != nil {
